@@ -81,17 +81,14 @@ export default class ViewTransformer extends React.Component {
 
   componentWillMount() {
     this.gestureResponder = createResponder({
-      onStartShouldSetResponder: (evt, gestureState) => true,
-      onMoveShouldSetResponderCapture: (evt, gestureState) => true,
+      onStartShouldSetResponder: (evt, gestureState) => evt.nativeEvent.touches.length === 2,
+      onMoveShouldSetResponderCapture: (evt, gestureState) => evt.nativeEvent.touches.length === 2,
       //onMoveShouldSetResponder: this.handleMove,
       onResponderMove: this.onResponderMove.bind(this),
       onResponderGrant: this.onResponderGrant.bind(this),
       onResponderRelease: this.onResponderRelease.bind(this),
       onResponderTerminate: this.onResponderRelease.bind(this),
-      onResponderTerminationRequest: (evt, gestureState) => false, //Do not allow parent view to intercept gesture
-      onResponderSingleTapConfirmed: (evt, gestureState) => {
-        this.props.onSingleTapConfirmed && this.props.onSingleTapConfirmed();
-      }
+      onResponderTerminationRequest: (evt, gestureState) => false //Do not allow parent view to intercept gesture
     });
   }
 
@@ -205,6 +202,7 @@ export default class ViewTransformer extends React.Component {
       transform.translateY = this.state.translateY + dy / this.state.scale;
     }
 
+    if (transform.scale <= 1) transform.scale = 1;
     this.updateTransform(transform);
     return true;
   }
@@ -219,29 +217,30 @@ export default class ViewTransformer extends React.Component {
       return;
     }
 
+    this.animateBounce();
 
-    if (gestureState.doubleTapUp) {
-      if (!this.props.enableScale) {
-        this.animateBounce();
-        return;
-      }
-      let pivotX = 0, pivotY = 0;
-      if (gestureState.dx || gestureState.dy) {
-        pivotX = gestureState.moveX - this.state.pageX;
-        pivotY = gestureState.moveY - this.state.pageY;
-      } else {
-        pivotX = gestureState.x0 - this.state.pageX;
-        pivotY = gestureState.y0 - this.state.pageY;
-      }
-
-      this.performDoubleTapUp(pivotX, pivotY);
-    } else {
-      if(this.props.enableTranslate) {
-        this.performFling(gestureState.vx, gestureState.vy);
-      } else {
-        this.animateBounce();
-      }
-    }
+    // if (gestureState.doubleTapUp) {
+    //   if (!this.props.enableScale) {
+    //     this.animateBounce();
+    //     return;
+    //   }
+    //   let pivotX = 0, pivotY = 0;
+    //   if (gestureState.dx || gestureState.dy) {
+    //     pivotX = gestureState.moveX - this.state.pageX;
+    //     pivotY = gestureState.moveY - this.state.pageY;
+    //   } else {
+    //     pivotX = gestureState.x0 - this.state.pageX;
+    //     pivotY = gestureState.y0 - this.state.pageY;
+    //   }
+    //
+    //   this.performDoubleTapUp(pivotX, pivotY);
+    // } else {
+    //   if(this.props.enableTranslate) {
+    //     this.performFling(gestureState.vx, gestureState.vy);
+    //   } else {
+    //     this.animateBounce();
+    //   }
+    // }
   }
 
 
@@ -448,9 +447,7 @@ ViewTransformer.propTypes = {
 
   onViewTransformed: React.PropTypes.func,
 
-  onTransformGestureReleased: React.PropTypes.func,
-
-  onSingleTapConfirmed: React.PropTypes.func
+  onTransformGestureReleased: React.PropTypes.func
 };
 ViewTransformer.defaultProps = {
   maxOverScrollDistance: 20,
